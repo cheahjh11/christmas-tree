@@ -33,7 +33,8 @@ let cx, topY, h;
 // 生成雪花
 function generateSnow() {
   snow = [];
-  let count = Math.floor(canvas.width * canvas.height / 5000);
+  // 根据屏幕面积控制雪花数量，最大 200
+  let count = Math.min(Math.floor(canvas.width * canvas.height / 5000), 200);
   for (let i = 0; i < count; i++) {
     snow.push({
       x: Math.random() * canvas.width,
@@ -67,20 +68,26 @@ function generateTree() {
 
 // 调整 canvas 尺寸
 function resize() {
-  canvas.width = window.innerWidth || 320;
-  canvas.height = window.innerHeight || 568;
+  canvas.width = Math.max(window.innerWidth, 300);
+  canvas.height = Math.max(window.innerHeight, 300);
+
+  // 先画黑色背景避免黑屏
+  ctx.fillStyle = "black";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   generateSnow();
   generateTree();
 }
 
 window.addEventListener("resize", resize);
-window.addEventListener("load", () => {
+
+// 确保 DOM 完全加载后再初始化
+document.addEventListener("DOMContentLoaded", () => {
   resize();
-  draw();
+  // 延迟首次 draw，确保浏览器渲染好
+  setTimeout(draw, 100);
 });
 
-// 绘制函数
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -132,18 +139,4 @@ function draw() {
   let b = Math.floor(200 + 55 * Math.sin(t + 4));
   ctx.fillStyle = `rgb(${r},${g},${b})`;
 
-  ctx.font = `${Math.floor(canvas.height * 0.05)}px Arial`;
-  ctx.textAlign = "center";
-
-  if (canvas.width < 500) {
-    ctx.fillText("🎄 圣诞节快乐 🎄", cx, topY + h + canvas.height * 0.08);
-    ctx.fillText("考试加油 🎄", cx, topY + h + canvas.height * 0.13);
-  } else {
-    ctx.fillText("🎄 圣诞节快乐，考试加油 🎄", cx, topY + h + canvas.height * 0.1);
-  }
-
-  requestAnimationFrame(draw);
-}
-</script>
-</body>
-</html>
+  ctx.font =
