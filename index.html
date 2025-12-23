@@ -10,11 +10,11 @@ html, body {
   padding: 0;
   background: black;
   overflow: hidden;
+  height: 100%;
+  width: 100%;
 }
 canvas {
   display: block;
-  width: 100vw;
-  height: 100vh;
 }
 </style>
 </head>
@@ -26,119 +26,124 @@ canvas {
 const canvas = document.getElementById("c");
 const ctx = canvas.getContext("2d");
 
-function resize(){
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+let snow = [];
+let tree = [];
+let cx, topY, h;
 
-  // 重新生成雪花
+// 生成雪花
+function generateSnow() {
   snow = [];
-  let snowCount = Math.floor(canvas.width * canvas.height / 5000);
-  for(let i=0;i<snowCount;i++){
+  let count = Math.floor(canvas.width * canvas.height / 5000);
+  for (let i = 0; i < count; i++) {
     snow.push({
-      x: Math.random()*canvas.width,
-      y: Math.random()*canvas.height,
-      r: Math.random()*2 + 0.5,
-      s: Math.random()*1 + 0.5
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 2 + 0.5,
+      s: Math.random() * 1 + 0.5
     });
   }
+}
 
-  // 重新生成树粒子
+// 生成树粒子
+function generateTree() {
   tree = [];
-  const cx = canvas.width/2;
-  const topY = canvas.height*0.15;
-  const h = canvas.height*0.6;
+  cx = canvas.width / 2;
+  topY = canvas.height * 0.15;
+  h = canvas.height * 0.6;
 
-  for(let y=0; y<h; y+=canvas.height*0.008){
-    let w = y*0.75;
-    for(let i=0;i<w;i+=canvas.width*0.015){
-      let dx = (Math.random()-0.5)*w;
+  for (let y = 0; y < h; y += canvas.height * 0.008) {
+    let w = y * 0.75;
+    for (let i = 0; i < w; i += canvas.width * 0.015) {
+      let dx = (Math.random() - 0.5) * w;
       tree.push({
-        x: cx+dx,
-        y: topY+y+Math.random()*4,
+        x: cx + dx,
+        y: topY + y + Math.random() * 4,
         a: Math.random(),
-        b: 1-Math.abs(dx)/w
+        b: 1 - Math.abs(dx) / w
       });
     }
   }
-
-  topYVal = topY;
-  hVal = h;
-  cxVal = cx;
 }
+
+// 调整 canvas 尺寸
+function resize() {
+  canvas.width = window.innerWidth || 320;
+  canvas.height = window.innerHeight || 568;
+
+  generateSnow();
+  generateTree();
+}
+
 window.addEventListener("resize", resize);
-resize();
+window.addEventListener("load", () => {
+  resize();
+  draw();
+});
 
-/* 雪和树粒子 */
-let snow = [];
-let tree = [];
-let cxVal, topYVal, hVal;
+// 绘制函数
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-function draw(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  /* 背景 */
+  // 背景
   ctx.fillStyle = "black";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  /* 雪 */
+  // 雪花
   ctx.fillStyle = "white";
-  snow.forEach(s=>{
+  snow.forEach(s => {
     ctx.beginPath();
-    ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
     ctx.fill();
     s.y += s.s;
-    if(s.y > canvas.height){
+    if (s.y > canvas.height) {
       s.y = 0;
-      s.x = Math.random()*canvas.width;
+      s.x = Math.random() * canvas.width;
     }
   });
 
-  /* 圣诞树 */
-  tree.forEach(p=>{
-    let glow = 0.4 + Math.sin(p.a*6)*0.3;
-    ctx.fillStyle = `rgba(255,210,210,${glow*p.b})`;
+  // 圣诞树粒子
+  tree.forEach(p => {
+    let glow = 0.4 + Math.sin(p.a * 6) * 0.3;
+    ctx.fillStyle = `rgba(255,210,210,${glow * p.b})`;
     ctx.beginPath();
-    ctx.arc(p.x,p.y,Math.max(canvas.width*0.005,2.4),0,Math.PI*2);
+    ctx.arc(p.x, p.y, Math.max(canvas.width * 0.005, 2.4), 0, Math.PI * 2);
     ctx.fill();
     p.a += 0.02;
   });
 
-  /* 顶部星 */
+  // 顶部星星
   ctx.fillStyle = "rgba(255,255,220,1)";
   ctx.beginPath();
-  ctx.arc(cxVal, topYVal - canvas.height*0.035, canvas.height*0.02, 0, Math.PI*2);
+  ctx.arc(cx, topY - canvas.height * 0.035, canvas.height * 0.02, 0, Math.PI * 2);
   ctx.fill();
 
-  /* 地面光环 */
+  // 地面光环
   ctx.strokeStyle = "rgba(255,255,255,0.1)";
-  for(let r=canvas.width*0.15; r<canvas.width*0.45; r+=canvas.width*0.05){
+  for (let r = canvas.width * 0.15; r < canvas.width * 0.45; r += canvas.width * 0.05) {
     ctx.beginPath();
-    ctx.ellipse(cxVal, topYVal+hVal+canvas.height*0.03, r, r*0.25, 0, 0, Math.PI*2);
+    ctx.ellipse(cx, topY + h + canvas.height * 0.03, r, r * 0.25, 0, 0, Math.PI * 2);
     ctx.stroke();
   }
 
-  /* 圣诞祝福文字（闪烁版） */
+  // 闪烁文字
   let t = Date.now() * 0.005;
   let r = Math.floor(200 + 55 * Math.sin(t));
   let g = Math.floor(100 + 155 * Math.sin(t + 2));
   let b = Math.floor(200 + 55 * Math.sin(t + 4));
-
   ctx.fillStyle = `rgb(${r},${g},${b})`;
-  ctx.font = `${Math.floor(canvas.height*0.05)}px Arial`;
+
+  ctx.font = `${Math.floor(canvas.height * 0.05)}px Arial`;
   ctx.textAlign = "center";
 
-  if(canvas.width < 500){ 
-    // 手机屏幕文字分两行
-    ctx.fillText("🎄 圣诞节快乐 🎄", cxVal, topYVal+hVal + canvas.height*0.08);
-    ctx.fillText("考试加油 🎄", cxVal, topYVal+hVal + canvas.height*0.13);
+  if (canvas.width < 500) {
+    ctx.fillText("🎄 圣诞节快乐 🎄", cx, topY + h + canvas.height * 0.08);
+    ctx.fillText("考试加油 🎄", cx, topY + h + canvas.height * 0.13);
   } else {
-    ctx.fillText("🎄 圣诞节快乐，考试加油 🎄", cxVal, topYVal+hVal + canvas.height*0.1);
+    ctx.fillText("🎄 圣诞节快乐，考试加油 🎄", cx, topY + h + canvas.height * 0.1);
   }
 
   requestAnimationFrame(draw);
 }
-
-draw();
 </script>
 </body>
 </html>
