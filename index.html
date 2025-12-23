@@ -18,7 +18,6 @@ canvas {
 }
 </style>
 </head>
-
 <body>
 <canvas id="c"></canvas>
 
@@ -30,12 +29,20 @@ let snow = [];
 let tree = [];
 let cx, topY, h;
 
-// 生成雪花
-function generateSnow() {
+// 初始化函数
+function init() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  // 中心和树高度
+  cx = canvas.width / 2;
+  topY = canvas.height * 0.15;
+  h = canvas.height * 0.6;
+
+  // 雪花
   snow = [];
-  // 根据屏幕面积控制雪花数量，最大 200
-  let count = Math.min(Math.floor(canvas.width * canvas.height / 5000), 200);
-  for (let i = 0; i < count; i++) {
+  const snowCount = Math.floor(canvas.width * canvas.height / 5000);
+  for (let i = 0; i < snowCount; i++) {
     snow.push({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
@@ -43,15 +50,9 @@ function generateSnow() {
       s: Math.random() * 1 + 0.5
     });
   }
-}
 
-// 生成树粒子
-function generateTree() {
+  // 树粒子
   tree = [];
-  cx = canvas.width / 2;
-  topY = canvas.height * 0.15;
-  h = canvas.height * 0.6;
-
   for (let y = 0; y < h; y += canvas.height * 0.008) {
     let w = y * 0.75;
     for (let i = 0; i < w; i += canvas.width * 0.015) {
@@ -66,28 +67,7 @@ function generateTree() {
   }
 }
 
-// 调整 canvas 尺寸
-function resize() {
-  canvas.width = Math.max(window.innerWidth, 300);
-  canvas.height = Math.max(window.innerHeight, 300);
-
-  // 先画黑色背景避免黑屏
-  ctx.fillStyle = "black";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  generateSnow();
-  generateTree();
-}
-
-window.addEventListener("resize", resize);
-
-// 确保 DOM 完全加载后再初始化
-document.addEventListener("DOMContentLoaded", () => {
-  resize();
-  // 延迟首次 draw，确保浏览器渲染好
-  setTimeout(draw, 100);
-});
-
+// 绘制函数
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -108,7 +88,7 @@ function draw() {
     }
   });
 
-  // 圣诞树粒子
+  // 树粒子
   tree.forEach(p => {
     let glow = 0.4 + Math.sin(p.a * 6) * 0.3;
     ctx.fillStyle = `rgba(255,210,210,${glow * p.b})`;
@@ -139,4 +119,27 @@ function draw() {
   let b = Math.floor(200 + 55 * Math.sin(t + 4));
   ctx.fillStyle = `rgb(${r},${g},${b})`;
 
-  ctx.font =
+  ctx.font = `${Math.floor(canvas.height * 0.05)}px Arial`;
+  ctx.textAlign = "center";
+  if (canvas.width < 500) {
+    ctx.fillText("🎄 圣诞节快乐 🎄", cx, topY + h + canvas.height * 0.08);
+    ctx.fillText("考试加油 🎄", cx, topY + h + canvas.height * 0.13);
+  } else {
+    ctx.fillText("🎄 圣诞节快乐，考试加油 🎄", cx, topY + h + canvas.height * 0.1);
+  }
+
+  requestAnimationFrame(draw);
+}
+
+// 初始化和事件绑定
+window.addEventListener("resize", () => {
+  init(); // 重置 canvas 和粒子
+});
+
+window.addEventListener("load", () => {
+  init();
+  draw(); // 确保先初始化再 draw
+});
+</script>
+</body>
+</html>
